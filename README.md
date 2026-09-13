@@ -1,4 +1,4 @@
-﻿# Retina AI - AI-Powered Retinal Disease Screening & Tele-Ophthalmology
+# Retina AI - AI-Powered Retinal Disease Screening & Tele-Ophthalmology
 
 A comprehensive AI-assisted tele-ophthalmology platform developed for Smart India Hackathon (SIH26038). The platform streamlines rural & point-of-care retinal screenings for conditions such as Diabetic Retinopathy, Glaucoma, Age-Related Macular Degeneration (AMD), and Hypertensive Retinopathy.
 
@@ -31,7 +31,7 @@ A comprehensive AI-assisted tele-ophthalmology platform developed for Smart Indi
 - npm or yarn
 
 ### Installation
-`ash
+```bash
 # Clone the repository
 git clone https://github.com/Harshinig-123/SIH26038.git
 
@@ -43,15 +43,10 @@ npm install
 
 # Run the development server
 npm run dev
-`
+```
 
 ### Build for Production
-`ash
+```bash
 npm run build
 npm run preview
-`
-
----
-
-## 📄 License
-This project is open-source and available under the MIT License.
+```
