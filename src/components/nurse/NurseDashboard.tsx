@@ -7,7 +7,7 @@ export const NurseDashboard: React.FC<{ onOpenNewScreening: () => void; onOpenNe
   onOpenNewScreening,
   onOpenNewPatient,
 }) => {
-  const { cases, triggerSync, pendingSyncCount, isSyncing, totalPatientsCount, urgentCasesCount } = useApp();
+  const { cases, triggerSync, pendingSyncCount, isSyncing, totalPatientsCount, urgentCasesCount, requestedAppointmentsCount, setActiveTab } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [viewNotesCase, setViewNotesCase] = useState<ScreeningCase | null>(null);
 
@@ -55,6 +55,32 @@ export const NurseDashboard: React.FC<{ onOpenNewScreening: () => void; onOpenNe
           </button>
         </div>
       </div>
+
+      {/* Patient Appointment Requests Notice for Nurse */}
+      {requestedAppointmentsCount > 0 && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-200 flex items-center justify-center text-amber-900 shrink-0">
+              <span className="material-symbols-outlined text-[24px]">notification_important</span>
+            </div>
+            <div>
+              <div className="font-bold text-sm text-amber-950">
+                {requestedAppointmentsCount} Patient Appointment {requestedAppointmentsCount === 1 ? 'Request' : 'Requests'} Waiting for Scheduling
+              </div>
+              <div className="text-xs text-amber-800">
+                Patients have requested specialist follow-up. Open Tele-Appointments to assign a doctor and time slot.
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setActiveTab('appointments')}
+            className="px-4 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-semibold text-xs transition-colors shadow-xs shrink-0 flex items-center gap-1.5 self-start sm:self-auto"
+          >
+            <span>Assign & Schedule Slot</span>
+            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+          </button>
+        </div>
+      )}
 
       {/* 4 Summary Stat Metric Cards (Exact Stitch Bento Layout) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

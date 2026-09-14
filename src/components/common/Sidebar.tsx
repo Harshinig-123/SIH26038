@@ -5,7 +5,7 @@ export const Sidebar: React.FC<{ onOpenNewScreening?: () => void; onOpenNewPatie
   onOpenNewScreening,
   onOpenNewPatient,
 }) => {
-  const { currentRole, activeTab, setActiveTab, pendingSyncCount, cases } = useApp();
+  const { currentRole, activeTab, setActiveTab, pendingSyncCount, cases, requestedAppointmentsCount } = useApp();
 
   const urgentCount = cases.filter(c => c.status === 'FLAGGED_URGENT').length;
 
@@ -80,14 +80,21 @@ export const Sidebar: React.FC<{ onOpenNewScreening?: () => void; onOpenNewPatie
 
               <button
                 onClick={() => setActiveTab('appointments')}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                   activeTab === 'appointments'
                     ? 'bg-primary-container text-on-primary font-semibold shadow-xs'
                     : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
                 }`}
               >
-                <span className="material-symbols-outlined text-[18px]">calendar_month</span>
-                <span>Tele-Appointments</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-[18px]">calendar_month</span>
+                  <span>Tele-Appointments</span>
+                </div>
+                {requestedAppointmentsCount > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold">
+                    {requestedAppointmentsCount}
+                  </span>
+                )}
               </button>
 
               <button

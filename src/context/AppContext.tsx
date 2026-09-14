@@ -67,6 +67,8 @@ interface AppContextType {
   addNewPatient: (patient: Omit<PatientRecord, 'id' | 'registeredDate'>) => string;
   verifyCase: (caseId: string, verifiedGrade: DRGrade, doctorNotes: string, referralHospital?: string) => void;
   scheduleAppointment: (appointment: Omit<TeleconsultAppointment, 'id' | 'status'>) => void;
+  requestAppointment: (patientId: string, reason: string, urgency?: 'Routine' | 'Urgent' | 'Emergency') => void;
+  confirmScheduleAppointment: (appointmentId: string, doctorName: string, scheduledTime: string) => void;
   completeAppointment: (appointmentId: string, doctorNotes?: string) => void;
   addFundusImage: (image: FundusImage) => void;
   // Computed KPIs
@@ -77,6 +79,7 @@ interface AppContextType {
   verifiedTodayCount: number;
   edemaAlertCount: number;
   scheduledAppointmentsCount: number;
+  requestedAppointmentsCount: number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -132,6 +135,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     c.eyes.od.aiGrading.edemaRisk === 'High' || c.eyes.os.aiGrading.edemaRisk === 'High'
   ).length;
   const scheduledAppointmentsCount = appointments.filter(a => a.status === 'SCHEDULED').length;
+  const requestedAppointmentsCount = appointments.filter(a => a.status === 'REQUESTED').length;
 
   const triggerSync = useCallback(() => {
     if (pendingSyncCount === 0) return;
@@ -204,6 +208,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAppointments(prev => [newAppointment, ...prev]);
   }, []);
 
+  const requestAppointment = useCallback((patientId: string, reason: string, urgency: 'Routine' | 'Urgent' | 'Emergency' = 'Routine') => {
+    const pat = patients.find(p => p.id === patientId);
+    const newId = `REQ-${Math.floor(100 + Math.random() * 900)}`;
+    const newRequest: TeleconsultAppointment = {
+      id: newId,
+      patientId,
+      patientName: pat?.name || 'Patient',
+      doctorName: 'To be assigned by PHC Nurse',
+      phcCenter: pat?.phcCenter || 'PHC Badlapur Central',
+      scheduledTime: 'Pending Nurse Slot Assignment',
+      urgency,
+      status: 'REQUESTED',
+      reason,
+      drGrade: pat?.lastDRGrade || 'NO_DR',
+    };
+    setAppointments(prev => [newRequest, ...prev]);
+  }, [patients]);
+
+  const confirmScheduleAppointment = useCallback((appointmentId: string, doctorName: string, scheduledTime: string) => {
+    setAppointments(prev => prev.map(app => {
+      if (app.id === appointmentId) {
+        return {
+          ...app,
+          doctorName,
+          scheduledTime,
+          status: 'SCHEDULED' as const,
+        };
+      }
+      return app;
+    }));
+  }, []);
+
   const completeAppointment = useCallback((appointmentId: string, doctorNotes?: string) => {
     setAppointments(prev => prev.map(app => {
       if (app.id === appointmentId) {
@@ -252,6 +288,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addNewPatient,
         verifyCase,
         scheduleAppointment,
+        requestAppointment,
+        confirmScheduleAppointment,
         completeAppointment,
         addFundusImage,
         totalPatientsCount,
@@ -261,6 +299,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         verifiedTodayCount,
         edemaAlertCount,
         scheduledAppointmentsCount,
+        requestedAppointmentsCount,
       }}
     >
       {children}

@@ -194,7 +194,7 @@ export interface TeleconsultAppointment {
   phcCenter: string;
   scheduledTime: string;
   urgency: 'Routine' | 'Urgent' | 'Emergency';
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'REQUESTED' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   reason: string;
   drGrade: DRGrade;
   doctorNotes?: string;
