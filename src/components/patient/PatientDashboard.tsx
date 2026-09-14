@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { DRGradeBadge } from '../common/DRGradeBadge';
 
 export const PatientDashboard: React.FC = () => {
-  const { currentLanguage, appointments, selectedPatient, cases } = useApp();
+  const { appointments, selectedPatient, cases } = useApp();
 
   const [consentApproved, setConsentApproved] = useState(true);
 
@@ -14,67 +14,23 @@ export const PatientDashboard: React.FC = () => {
   const osGrade = patientCase?.eyes.os.aiGrading.predictedGrade || 'NO_DR';
   const overallGrade = patientCase?.verifiedGrade || odGrade;
 
-  // Translations dictionary for bilingual patient accessibility
+  // Plain English health advice for patient accessibility
   const t = {
-    en: {
-      title: 'My Vision Health Record',
-      subtitle: 'Ayushman Bharat Digital Mission • Diabetic Retinopathy Care',
-      statusTitle: 'Latest Eye Checkup Result',
-      date: 'Screened on 13 Sep 2026 at PHC Badlapur Camp',
-      doctorVerdict: 'High Priority Specialist Follow-Up Recommended',
-      doctorVerdictDesc: 'The camera detected early blood vessel changes related to diabetes in both eyes. Dr. Arvind Rao has recommended an in-person eye clinic consultation within 7 days to protect your vision.',
-      whatToDo: 'What Should I Do Next?',
-      step1: 'Attend your scheduled tele-consultation appointment.',
-      step2: 'Continue taking your prescribed diabetes and blood pressure medications regularly.',
-      step3: 'Avoid strenuous heavy lifting until your retina specialist evaluates your eye.',
-      historyTitle: 'My Screening History & Progress',
-      consentTitle: 'My Health Data & ABHA Consent',
-      consentDesc: 'Your retinal images and screening results are encrypted and linked to your ABHA ID (91-4502-8841-3920) for continuity of care across government hospitals.',
-    },
-    hi: {
-      title: 'मेरा नेत्र स्वास्थ्य रिकॉर्ड',
-      subtitle: 'आयुष्मान भारत डिजिटल मिशन • मधुमेह रेटिनोपैथी देखभाल',
-      statusTitle: 'नवीनतम नेत्र जांच परिणाम',
-      date: '13 सितंबर 2026 को पीएचसी बदलापुर कैंप में जांच की गई',
-      doctorVerdict: 'विशेषज्ञ डॉक्टर से तत्काल जांच की सलाह',
-      doctorVerdictDesc: 'जांच में दोनों आंखों में मधुमेह के कारण रक्त वाहिकाओं में परिवर्तन पाए गए हैं। आपकी दृष्टि की सुरक्षा के लिए डॉ. अरविंद राव ने 7 दिनों के भीतर नेत्र अस्पताल में मिलने की सलाह दी है।',
-      whatToDo: 'आगे क्या करना चाहिए?',
-      step1: 'अपने निर्धारित टेली-परामर्श वीडियो कॉल में शामिल हों।',
-      step2: 'अपनी शुगर और रक्तचाप की दवाएं समय पर लेते रहें।',
-      step3: 'नेत्र विशेषज्ञ की जांच तक भारी वजन उठाने से बचें।',
-      historyTitle: 'पिछली जांचों का इतिहास',
-      consentTitle: 'मेरा स्वास्थ्य डेटा और सहमति',
-      consentDesc: 'आपकी आंखों की तस्वीरें और रिपोर्ट आपकी आभा आईडी से सुरक्षित रूप से जुड़ी हुई हैं।',
-    },
-    mr: {
-      title: 'माझी दृष्टी आरोग्य नोंद',
-      subtitle: 'आयुष्मान भारत डिजिटल मिशन • मधुमेही डोळ्यांची तपासणी',
-      statusTitle: 'नवीनतम डोळ्यांच्या तपासणीचा निकाल',
-      date: '१३ सप्टेंबर २०२६ रोजी प्राथमिक आरोग्य केंद्र बदलापूर येथे तपासणी',
-      doctorVerdict: 'तज्ज्ञ नेत्रतज्ज्ञांकडे तातडीने सल्ला घेण्याची शिफारस',
-      doctorVerdictDesc: 'कॅमेरा तपासणीत मधुमेहामुळे डोळ्यांतील रक्तवाहिन्यांवर परिणाम दिसून आला आहे. दृष्टी सुरक्षित ठेवण्यासाठी डॉ. अरविंद राव यांनी ७ दिवसांत नेत्र रुग्णालयात प्रत्यक्ष तपासणीचा सल्ला दिला आहे.',
-      whatToDo: 'पुढे काय करावे?',
-      step1: 'तुमच्या नियोजित व्हिडिओ तपासणीमध्ये वेळेवर उपस्थित राहा.',
-      step2: 'मधुमेह आणि रक्तदाबाची औषधे नियमित वेळेवर घ्या.',
-      step3: 'नेत्रतज्ज्ञांचा सल्ला मिळेपर्यंत जड कामे करणे टाळा.',
-      historyTitle: 'मागील तपासण्यांचा इतिहास',
-      consentTitle: 'माझा आरोग्य डेटा आणि संमती',
-      consentDesc: 'आपले अहवाल आणि फोटो आभा आयडीशी सुरक्षितपणे जोडलेले आहेत.',
-    }
-  }[currentLanguage] || {
     title: 'My Vision Health Record',
-    subtitle: 'Ayushman Bharat Digital Mission',
+    subtitle: 'Ayushman Bharat Digital Mission • Diabetic Retinopathy Care',
     statusTitle: 'Latest Eye Checkup Result',
-    date: 'Screened on 13 Sep 2026',
-    doctorVerdict: 'High Priority Specialist Follow-Up Recommended',
-    doctorVerdictDesc: 'The camera detected early blood vessel changes.',
+    date: patientCase ? `Screened on ${patientCase.createdDate} at ${patientCase.phcCenter}` : 'Screened at PHC Badlapur Camp',
+    doctorVerdict: overallGrade === 'SEVERE_NPDR' || overallGrade === 'PDR'
+      ? 'High Priority Specialist Follow-Up Recommended'
+      : 'Routine Follow-Up & Monitoring Recommended',
+    doctorVerdictDesc: patientCase?.doctorNotes || 'Retinal photography recorded. Maintain regular blood sugar and blood pressure medications as advised by your physician.',
     whatToDo: 'What Should I Do Next?',
-    step1: 'Attend your appointment.',
-    step2: 'Take your medications.',
-    step3: 'Follow doctor advice.',
-    historyTitle: 'My Screening History',
-    consentTitle: 'Consent & Privacy',
-    consentDesc: 'Your data is safe.',
+    step1: 'Attend your scheduled tele-consultation appointment with the specialist doctor.',
+    step2: 'Continue taking your prescribed diabetes and blood pressure medications regularly.',
+    step3: 'Follow doctor advice and schedule periodic follow-up eye screenings.',
+    historyTitle: 'My Screening History & Progress',
+    consentTitle: 'My Health Data & ABHA Consent',
+    consentDesc: `Your retinal images and screening results are encrypted and linked to your ABHA ID (${patient?.abhaId || '91-4502-8841-3920'}) for continuity of care across government hospitals.`,
   };
 
   return (

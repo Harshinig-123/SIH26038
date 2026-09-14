@@ -67,6 +67,7 @@ interface AppContextType {
   addNewPatient: (patient: Omit<PatientRecord, 'id' | 'registeredDate'>) => string;
   verifyCase: (caseId: string, verifiedGrade: DRGrade, doctorNotes: string, referralHospital?: string) => void;
   scheduleAppointment: (appointment: Omit<TeleconsultAppointment, 'id' | 'status'>) => void;
+  completeAppointment: (appointmentId: string, doctorNotes?: string) => void;
   addFundusImage: (image: FundusImage) => void;
   // Computed KPIs
   totalPatientsCount: number;
@@ -203,6 +204,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAppointments(prev => [newAppointment, ...prev]);
   }, []);
 
+  const completeAppointment = useCallback((appointmentId: string, doctorNotes?: string) => {
+    setAppointments(prev => prev.map(app => {
+      if (app.id === appointmentId) {
+        return {
+          ...app,
+          status: 'COMPLETED' as const,
+          doctorNotes: doctorNotes || app.doctorNotes,
+        };
+      }
+      return app;
+    }));
+  }, []);
+
   const addFundusImage = useCallback((image: FundusImage) => {
     setFundusImages(prev => [image, ...prev]);
   }, []);
@@ -238,6 +252,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addNewPatient,
         verifyCase,
         scheduleAppointment,
+        completeAppointment,
         addFundusImage,
         totalPatientsCount,
         todayScreeningsCount,

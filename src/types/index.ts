@@ -197,4 +197,5 @@ export interface TeleconsultAppointment {
   status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   reason: string;
   drGrade: DRGrade;
+  doctorNotes?: string;
 }

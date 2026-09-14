@@ -1,14 +1,12 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { UserRole, Language } from '../../types';
+import { UserRole } from '../../types';
 import { AppLogo } from './AppLogo';
 
 export const Header: React.FC = () => {
   const { 
     currentRole, 
     setCurrentRole, 
-    currentLanguage, 
-    setCurrentLanguage,
     isOnline, 
     setIsOnline,
     pendingSyncCount,
@@ -119,25 +117,6 @@ export const Header: React.FC = () => {
               <span>{isSyncing ? 'Syncing...' : `${pendingSyncCount} pending`}</span>
             </button>
           )}
-        </div>
-
-        {/* Language Selector */}
-        <div className="flex items-center bg-surface-container rounded-lg p-0.5 text-xs font-medium text-on-surface-variant">
-          {(['en', 'hi', 'mr'] as Language[]).map((lang) => (
-            <button
-              key={lang}
-              onClick={() => setCurrentLanguage(lang)}
-              className={`px-2 py-0.5 rounded transition-all ${
-                currentLanguage === lang
-                  ? 'bg-surface-container-lowest text-primary font-bold shadow-xs'
-                  : 'hover:text-on-surface'
-              }`}
-            >
-              {lang === 'en' && 'EN'}
-              {lang === 'hi' && 'हिंदी'}
-              {lang === 'mr' && 'मराठी'}
-            </button>
-          ))}
         </div>
 
         {/* User Profile */}

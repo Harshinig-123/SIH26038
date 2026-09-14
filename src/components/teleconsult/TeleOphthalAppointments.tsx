@@ -4,12 +4,23 @@ import { TeleconsultAppointment } from '../../types';
 import { DRGradeBadge } from '../common/DRGradeBadge';
 
 export const TeleOphthalAppointments: React.FC = () => {
-  const { appointments, scheduleAppointment, patients, doctors, currentRole } = useApp();
+  const { appointments, scheduleAppointment, completeAppointment, patients, doctors, currentRole } = useApp();
 
   const [activeCall, setActiveCall] = useState<TeleconsultAppointment | null>(null);
   const [rxNotes, setRxNotes] = useState<string>('Tab Metformin 500mg BD • Eye Drop Nepafenac 0.1% TDS (OD) • Strict Glycemic & BP Control');
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [showCompletedNotice, setShowCompletedNotice] = useState<string>('');
+
+  const handleEndConsultation = () => {
+    if (activeCall) {
+      completeAppointment(activeCall.id, rxNotes);
+      const patName = activeCall.patientName;
+      setActiveCall(null);
+      setShowCompletedNotice(`Consultation for ${patName} ended successfully. Status marked as Completed.`);
+      setTimeout(() => setShowCompletedNotice(''), 4000);
+    }
+  };
 
   // New appointment form state
   const [showNewModal, setShowNewModal] = useState(false);
@@ -68,6 +79,13 @@ export const TeleOphthalAppointments: React.FC = () => {
         </button>
       </div>
 
+      {showCompletedNotice && (
+        <div className="p-4 bg-emerald-100 border border-emerald-300 rounded-2xl text-emerald-900 text-xs font-semibold flex items-center gap-2.5 shadow-xs animate-fadeIn">
+          <span className="material-symbols-outlined text-emerald-700 text-[22px]">check_circle</span>
+          <span>{showCompletedNotice}</span>
+        </div>
+      )}
+
       {/* ACTIVE VIDEO CALL LOBBY SIMULATOR (DOCTOR ONLY) */}
       {activeCall && currentRole === 'doctor' && (
         <div className="bg-surface-container-lowest rounded-2xl border-2 border-primary/30 p-6 shadow-md flex flex-col gap-5">
@@ -81,8 +99,8 @@ export const TeleOphthalAppointments: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setActiveCall(null)}
-              className="flex items-center gap-1 px-3 py-1 rounded-lg bg-red-100 text-red-800 font-semibold text-xs hover:bg-red-200"
+              onClick={handleEndConsultation}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-xs shadow-xs transition-colors"
             >
               <span className="material-symbols-outlined text-[16px]">call_end</span>
               <span>End Consultation</span>
@@ -161,10 +179,10 @@ export const TeleOphthalAppointments: React.FC = () => {
               <div className="flex items-center justify-between pt-2 border-t border-outline-variant/30">
                 <span className="text-[11px] text-on-surface-variant">ABHA Consent Linked • Signed Digitally</span>
                 <button
-                  onClick={() => { setRxNotes(''); setActiveCall(null); }}
+                  onClick={handleEndConsultation}
                   className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-dark text-on-primary font-semibold text-xs shadow-xs"
                 >
-                  Transmit Rx to PHC
+                  Transmit Rx & Complete
                 </button>
               </div>
             </div>
@@ -186,15 +204,24 @@ export const TeleOphthalAppointments: React.FC = () => {
                   <div className="text-xs text-on-surface-variant">{app.phcCenter}</div>
                 </div>
 
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    app.urgency === 'Emergency' || app.urgency === 'Urgent'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-surface-container text-on-surface'
-                  }`}
-                >
-                  {app.urgency}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  {app.status === 'COMPLETED' ? (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[12px]">done_all</span>
+                      Completed
+                    </span>
+                  ) : (
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        app.urgency === 'Emergency' || app.urgency === 'Urgent'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-surface-container text-on-surface'
+                      }`}
+                    >
+                      {app.urgency}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="flex items-center gap-2 mb-2">
@@ -217,16 +244,24 @@ export const TeleOphthalAppointments: React.FC = () => {
                   <span>Doctor Clinical Orders / Rx</span>
                 </div>
                 <p className="text-[11px] text-on-surface leading-relaxed">
-                  {app.patientName.includes('Kasturba')
+                  {app.doctorNotes || (app.patientName.includes('Kasturba')
                     ? 'Tab Metformin 500mg BD • Eye Drop Nepafenac 0.1% TDS (OD) • Referral to Base Hospital within 7 days.'
-                    : 'Routine glycemic control advised. Follow up tele-screening in 6 months.'}
+                    : 'Routine glycemic control advised. Follow up tele-screening in 6 months.')}
                 </p>
               </div>
             </div>
 
-            {currentRole === 'doctor' ? (
+            {app.status === 'COMPLETED' ? (
+              <div className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold text-xs">
+                <span className="material-symbols-outlined text-[16px]">task_alt</span>
+                <span>Consultation Over • Prescription Signed</span>
+              </div>
+            ) : currentRole === 'doctor' ? (
               <button
-                onClick={() => setActiveCall(app)}
+                onClick={() => {
+                  setActiveCall(app);
+                  setRxNotes(app.doctorNotes || 'Tab Metformin 500mg BD • Eye Drop Nepafenac 0.1% TDS (OD) • Strict Glycemic & BP Control');
+                }}
                 className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-primary-container hover:bg-primary text-on-primary font-semibold text-xs transition-colors shadow-xs"
               >
                 <span className="material-symbols-outlined text-[18px]">video_call</span>
