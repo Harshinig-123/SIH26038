@@ -22,7 +22,6 @@ export const LoginPage: React.FC<{ onLogin: (role: UserRole) => void }> = ({ onL
   const [patientAbha, setPatientAbha] = useState('');
   const [patientPin, setPatientPin] = useState('');
   const [showPatientPin, setShowPatientPin] = useState(false);
-  const [otpChannel, setOtpChannel] = useState<'sms' | 'voice'>('sms');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authMessage, setAuthMessage] = useState('');
 
@@ -456,47 +455,14 @@ export const LoginPage: React.FC<{ onLogin: (role: UserRole) => void }> = ({ onL
                   </p>
                 </div>
 
-                <div className="p-3 bg-surface-container-low rounded-xl border border-outline-variant/30">
-                  <span className="font-semibold text-on-surface block mb-2">Select Authentication Channel</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <label className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors ${
-                      otpChannel === 'sms' ? 'border-primary bg-primary-fixed/20' : 'border-outline-variant/40 bg-surface-container-lowest'
-                    }`}>
-                      <input
-                        type="radio"
-                        name="otp_channel_sel"
-                        checked={otpChannel === 'sms'}
-                        onChange={() => setOtpChannel('sms')}
-                        className="text-primary focus:ring-primary"
-                      />
-                      <span className="material-symbols-outlined text-[18px] text-primary">sms</span>
-                      <span className="text-xs text-on-surface">SMS OTP on Registered Mobile</span>
-                    </label>
-
-                    <label className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors ${
-                      otpChannel === 'voice' ? 'border-primary bg-primary-fixed/20' : 'border-outline-variant/40 bg-surface-container-lowest'
-                    }`}>
-                      <input
-                        type="radio"
-                        name="otp_channel_sel"
-                        checked={otpChannel === 'voice'}
-                        onChange={() => setOtpChannel('voice')}
-                        className="text-primary focus:ring-primary"
-                      />
-                      <span className="material-symbols-outlined text-[18px] text-secondary">record_voice_over</span>
-                      <span className="text-xs text-on-surface">Bilingual Voice OTP (मराठी/हिंदी)</span>
-                    </label>
-                  </div>
-                </div>
-
                 <div className="pt-3">
                   <button
                     type="submit"
                     disabled={isAuthenticating}
                     className="w-full py-2.5 px-6 rounded-xl bg-primary hover:bg-primary-dark text-on-primary font-semibold text-xs shadow-xs flex items-center justify-center gap-2 transition-all"
                   >
-                    <span>Sign In with ABHA / OTP</span>
-                    <span className="material-symbols-outlined text-[18px]">send</span>
+                    <span>Sign In to Patient Portal</span>
+                    <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                   </button>
                 </div>
               </form>
