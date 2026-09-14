@@ -11,12 +11,18 @@ import { PatientsRegistry } from './components/nurse/PatientsRegistry';
 import { SyncStatusView } from './components/common/SyncStatusView';
 import { NewScreeningModal } from './components/nurse/NewScreeningModal';
 import { PatientRegistrationModal } from './components/nurse/PatientRegistrationModal';
+import { LoginPage } from './components/auth/LoginPage';
 
 export const App: React.FC = () => {
-  const { currentRole, activeTab } = useApp();
+  const { currentRole, activeTab, isAuthenticated, login } = useApp();
 
   const [isNewScreeningOpen, setIsNewScreeningOpen] = useState(false);
   const [isNewPatientOpen, setIsNewPatientOpen] = useState(false);
+
+  // If not authenticated, display the unified login page
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={(role) => login(role)} />;
+  }
 
   // Render main content area depending on current role and active tab
   const renderMainContent = () => {

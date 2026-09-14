@@ -71,6 +71,10 @@ interface AppContextType {
   confirmScheduleAppointment: (appointmentId: string, doctorName: string, scheduledTime: string) => void;
   completeAppointment: (appointmentId: string, doctorNotes?: string) => void;
   addFundusImage: (image: FundusImage) => void;
+  // Auth State
+  isAuthenticated: boolean;
+  login: (role?: UserRole) => void;
+  logout: () => void;
   // Computed KPIs
   totalPatientsCount: number;
   todayScreeningsCount: number;
@@ -105,6 +109,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [pendingSyncCount, setPendingSyncCount] = useState<number>(() => loadState('retina_sync_count', 3));
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => loadState('retina_auth', false));
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
   const selectedCase = cases.find(c => c.id === selectedCaseId);
@@ -116,6 +121,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => { saveState('retina_appointments', appointments); }, [appointments]);
   useEffect(() => { saveState('retina_fundus_images', fundusImages); }, [fundusImages]);
   useEffect(() => { saveState('retina_sync_count', pendingSyncCount); }, [pendingSyncCount]);
+  useEffect(() => { saveState('retina_auth', isAuthenticated); }, [isAuthenticated]);
 
   // When changing role, default to appropriate active tab
   useEffect(() => {
@@ -257,6 +263,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setFundusImages(prev => [image, ...prev]);
   }, []);
 
+  const login = useCallback((role?: UserRole) => {
+    if (role) {
+      setCurrentRole(role);
+    }
+    setIsAuthenticated(true);
+  }, []);
+
+  const logout = useCallback(() => {
+    setIsAuthenticated(false);
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -292,6 +309,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         confirmScheduleAppointment,
         completeAppointment,
         addFundusImage,
+        isAuthenticated,
+        login,
+        logout,
         totalPatientsCount,
         todayScreeningsCount,
         urgentCasesCount,

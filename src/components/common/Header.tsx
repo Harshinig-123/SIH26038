@@ -11,7 +11,8 @@ export const Header: React.FC = () => {
     setIsOnline,
     pendingSyncCount,
     triggerSync,
-    isSyncing
+    isSyncing,
+    logout
   } = useApp();
 
   const roleInfo = {
@@ -134,6 +135,14 @@ export const Header: React.FC = () => {
             alt={user.name}
             className="w-8 h-8 rounded-full object-cover ring-1 ring-primary/30"
           />
+          <button
+            onClick={logout}
+            title="Log Out / Switch Account"
+            className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-red-600 px-2 py-1 rounded-lg border border-outline-variant/40 hover:border-red-200 hover:bg-red-50/50 transition-colors ml-1"
+          >
+            <span className="material-symbols-outlined text-[16px]">logout</span>
+            <span className="hidden lg:inline text-[11px] font-medium">Logout</span>
+          </button>
         </div>
       </div>
     </header>
