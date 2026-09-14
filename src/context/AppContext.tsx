@@ -109,11 +109,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [pendingSyncCount, setPendingSyncCount] = useState<number>(() => loadState('retina_sync_count', 3));
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => loadState('retina_auth', false));
+  // Login page always opens 1st
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
   const selectedCase = cases.find(c => c.id === selectedCaseId);
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
+
+  // Clear any existing stored auth so login page opens 1st
+  useEffect(() => {
+    localStorage.removeItem('retina_auth');
+  }, []);
 
   // Persist to localStorage on state changes
   useEffect(() => { saveState('retina_cases', cases); }, [cases]);
@@ -121,7 +127,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => { saveState('retina_appointments', appointments); }, [appointments]);
   useEffect(() => { saveState('retina_fundus_images', fundusImages); }, [fundusImages]);
   useEffect(() => { saveState('retina_sync_count', pendingSyncCount); }, [pendingSyncCount]);
-  useEffect(() => { saveState('retina_auth', isAuthenticated); }, [isAuthenticated]);
 
   // When changing role, default to appropriate active tab
   useEffect(() => {
