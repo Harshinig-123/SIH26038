@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { DRGrade } from '../../types';
 import { DRGradeBadge } from '../common/DRGradeBadge';
 
 export const CaseReviewWorkspace: React.FC = () => {
-  const { selectedCase, cases, setSelectedCaseId, verifyCase, setActiveTab } = useApp();
+  const { selectedCase, cases, setSelectedCaseId, verifyCase, setActiveTab, fundusImages } = useApp();
 
   const activeCase = selectedCase || cases[0];
 
@@ -28,6 +28,16 @@ export const CaseReviewWorkspace: React.FC = () => {
     'Sankara Eye Hospital, Thane Base'
   );
   const [signedSuccess, setSignedSuccess] = useState<boolean>(false);
+
+  // Reset form state when navigating between cases
+  useEffect(() => {
+    if (activeCase) {
+      setVerifiedGrade(activeCase.eyes[activeEye].aiGrading.predictedGrade || 'NO_DR');
+      setDoctorNotes(activeCase.doctorNotes || '');
+      setReferralHospital('Sankara Eye Hospital, Thane Base');
+      setSignedSuccess(false);
+    }
+  }, [activeCase?.id, activeEye]);
 
   if (!activeCase) {
     return (
@@ -237,11 +247,24 @@ export const CaseReviewWorkspace: React.FC = () => {
                 filter: `${redFreeFilter ? 'grayscale(100%) sepia(100%) hue-rotate(90deg) saturate(300%) contrast(140%)' : ''} ${invertFilter ? 'invert(100%)' : ''}`,
               }}
             >
-              <img
-                src={eyeData.imageUrl}
-                alt={`${activeEye.toUpperCase()} Retinal Scan`}
-                className="w-full h-full object-cover select-none"
-              />
+              {(() => {
+                const uploadedImage = fundusImages.find(
+                  fi => fi.case_id === activeCase.id && fi.eye_side === activeEye.toUpperCase()
+                );
+                const imgSrc = uploadedImage?.image_data || eyeData.imageUrl;
+                return imgSrc ? (
+                  <img
+                    src={imgSrc}
+                    alt={`${activeEye.toUpperCase()} Retinal Scan`}
+                    className="w-full h-full object-cover select-none"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-white/60 flex-col gap-2">
+                    <span className="material-symbols-outlined text-[48px]">visibility_off</span>
+                    <span className="text-sm">No fundus image uploaded</span>
+                  </div>
+                );
+              })()}
 
               {/* Explainable AI Grad-CAM Visual Heatmap Simulation Overlay */}
               {showGradCam && (

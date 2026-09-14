@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { DRGradeBadge } from '../common/DRGradeBadge';
 
 export const DoctorDashboard: React.FC = () => {
-  const { cases, setSelectedCaseId, setActiveTab } = useApp();
+  const { cases, setSelectedCaseId, setActiveTab, verifiedTodayCount, edemaAlertCount, scheduledAppointmentsCount } = useApp();
 
   const handleOpenReview = (caseId: string) => {
     setSelectedCaseId(caseId);
@@ -77,7 +77,7 @@ export const DoctorDashboard: React.FC = () => {
             </div>
             <div className="mt-3 flex items-baseline justify-between">
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-on-surface">41</span>
+                <span className="text-3xl font-bold text-on-surface">{verifiedTodayCount}</span>
                 <span className="text-xs text-on-surface-variant">/ 50 complete</span>
               </div>
               <span className="text-base font-bold text-primary">82%</span>
@@ -104,7 +104,7 @@ export const DoctorDashboard: React.FC = () => {
               </span>
             </div>
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-red-700">3</span>
+              <span className="text-3xl font-bold text-red-700">{edemaAlertCount}</span>
               <span className="text-xs text-on-surface-variant">sight-threatening</span>
             </div>
           </div>
@@ -124,7 +124,7 @@ export const DoctorDashboard: React.FC = () => {
               </span>
             </div>
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-secondary">6</span>
+              <span className="text-3xl font-bold text-secondary">{scheduledAppointmentsCount}</span>
               <span className="text-xs text-on-surface-variant">slots remaining</span>
             </div>
           </div>

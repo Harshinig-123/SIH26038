@@ -1,4 +1,25 @@
-import { ScreeningCase, PatientRecord, TeleconsultAppointment } from '../types';
+import { ScreeningCase, PatientRecord, TeleconsultAppointment, HealthWorker, Doctor, VillagePHCNode } from '../types';
+
+// --- ER-Aligned Seed Data ---
+
+export const INITIAL_VILLAGES: VillagePHCNode[] = [
+  { village_id: 'VIL-001', village_name: 'Sonawale Village', phc_name: 'PHC Badlapur Central', district: 'Thane', population: 8200, diabetes_prevalence: 12.4, latitude: 19.1625, longitude: 73.2414 },
+  { village_id: 'VIL-002', village_name: 'Kulgaon Rural', phc_name: 'PHC Badlapur Central', district: 'Thane', population: 6500, diabetes_prevalence: 10.8, latitude: 19.1710, longitude: 73.2520 },
+  { village_id: 'VIL-003', village_name: 'Ambernath West', phc_name: 'PHC Ambernath', district: 'Thane', population: 12100, diabetes_prevalence: 14.2, latitude: 19.2050, longitude: 73.1880 },
+  { village_id: 'VIL-004', village_name: 'Vangani Phata', phc_name: 'PHC Badlapur Central', district: 'Thane', population: 4300, diabetes_prevalence: 11.6, latitude: 19.1440, longitude: 73.3120 },
+  { village_id: 'VIL-005', village_name: 'Shirgaon Camp', phc_name: 'PHC Murbad', district: 'Thane', population: 3800, diabetes_prevalence: 15.1, latitude: 19.2980, longitude: 73.3560 },
+];
+
+export const INITIAL_DOCTORS: Doctor[] = [
+  { doctor_id: 'DOC-001', name: 'Dr. Arvind Rao', specialization: 'MS (Ophthalmology)', phone: '+91 98765 43210', hospital_name: 'Sankara Eye Hospital, Thane', email: 'arvind.rao@sankara.org', status: 'active' },
+  { doctor_id: 'DOC-002', name: 'Dr. Meena Iyer', specialization: 'DNB (Retina)', phone: '+91 98765 43211', hospital_name: 'LV Prasad Eye Institute', email: 'meena.iyer@lvprasad.org', status: 'active' },
+  { doctor_id: 'DOC-003', name: 'Dr. Sunil Patkar', specialization: 'DO (Ophthalmology)', phone: '+91 98765 43212', hospital_name: 'District Hospital, Thane', email: 'sunil.patkar@thane.gov.in', status: 'active' },
+];
+
+export const INITIAL_HEALTH_WORKERS: HealthWorker[] = [
+  { worker_id: 'HW-001', name: 'Sister Lakshmi Sharma', role: 'Nurse', phone: '+91 97654 12345', phc_name: 'PHC Badlapur Central', email: 'lakshmi.sharma@phc.gov.in', status: 'active' },
+  { worker_id: 'HW-002', name: 'Sister Anita More', role: 'ANM', phone: '+91 97654 12346', phc_name: 'PHC Badlapur Central', email: 'anita.more@phc.gov.in', status: 'active' },
+];
 
 // High-quality retinal fundus images for demonstration
 export const FUNDUS_IMAGES = {

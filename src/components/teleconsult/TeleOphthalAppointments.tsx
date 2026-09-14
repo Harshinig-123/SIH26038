@@ -4,7 +4,7 @@ import { TeleconsultAppointment } from '../../types';
 import { DRGradeBadge } from '../common/DRGradeBadge';
 
 export const TeleOphthalAppointments: React.FC = () => {
-  const { appointments, scheduleAppointment } = useApp();
+  const { appointments, scheduleAppointment, patients, doctors } = useApp();
 
   const [activeCall, setActiveCall] = useState<TeleconsultAppointment | null>(null);
   const [rxNotes, setRxNotes] = useState<string>('Tab Metformin 500mg BD • Eye Drop Nepafenac 0.1% TDS (OD) • Strict Glycemic & BP Control');
@@ -13,24 +13,33 @@ export const TeleOphthalAppointments: React.FC = () => {
 
   // New appointment form state
   const [showNewModal, setShowNewModal] = useState(false);
-  const [patientName, setPatientName] = useState('Kasturba Bai Sakharam');
-  const [scheduledTime, setScheduledTime] = useState('Today, 03:30 PM IST');
+  const [selectedPatientId, setSelectedPatientId] = useState('');
+  const [selectedDoctorId, setSelectedDoctorId] = useState('');
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTimeSlot, setScheduledTimeSlot] = useState('');
   const [urgency, setUrgency] = useState<'Routine' | 'Urgent' | 'Emergency'>('Urgent');
   const [reason, setReason] = useState('Follow-up evaluation on severe macular exudation');
 
   const handleCreateAppointment = (e: React.FormEvent) => {
     e.preventDefault();
+    const pat = patients.find(p => p.id === selectedPatientId);
+    const doc = doctors.find(d => d.doctor_id === selectedDoctorId);
     scheduleAppointment({
-      patientId: 'PAT-8841',
-      patientName,
-      doctorName: 'Dr. Arvind Rao, MS (Ophthalmology)',
-      phcCenter: 'PHC Badlapur Central',
-      scheduledTime,
+      patientId: selectedPatientId || patients[0]?.id || '',
+      patientName: pat?.name || patients[0]?.name || 'Unknown',
+      doctorName: doc ? `${doc.name}, ${doc.specialization}` : doctors[0] ? `${doctors[0].name}, ${doctors[0].specialization}` : 'TBD',
+      phcCenter: pat?.phcCenter || 'PHC Badlapur Central',
+      scheduledTime: scheduledDate && scheduledTimeSlot ? `${scheduledDate}, ${scheduledTimeSlot}` : 'TBD',
       urgency,
       reason,
-      drGrade: 'SEVERE_NPDR',
+      drGrade: pat?.lastDRGrade || 'NO_DR',
     });
     setShowNewModal(false);
+    setSelectedPatientId('');
+    setSelectedDoctorId('');
+    setScheduledDate('');
+    setScheduledTimeSlot('');
+    setReason('');
   };
 
   return (
@@ -152,7 +161,7 @@ export const TeleOphthalAppointments: React.FC = () => {
               <div className="flex items-center justify-between pt-2 border-t border-outline-variant/30">
                 <span className="text-[11px] text-on-surface-variant">ABHA Consent Linked • Signed Digitally</span>
                 <button
-                  onClick={() => alert(`Prescription successfully generated for ${activeCall.patientName}!`)}
+                  onClick={() => { setRxNotes(''); setActiveCall(null); }}
                   className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-dark text-on-primary font-semibold text-xs shadow-xs"
                 >
                   Transmit Rx to PHC
@@ -229,25 +238,55 @@ export const TeleOphthalAppointments: React.FC = () => {
 
             <form onSubmit={handleCreateAppointment} className="flex flex-col gap-3">
               <div>
-                <label className="block font-semibold text-on-surface mb-1">Patient Name</label>
-                <input
-                  type="text"
+                <label className="block font-semibold text-on-surface mb-1">Select Patient</label>
+                <select
                   required
-                  value={patientName}
-                  onChange={(e) => setPatientName(e.target.value)}
+                  value={selectedPatientId}
+                  onChange={(e) => setSelectedPatientId(e.target.value)}
                   className="w-full bg-surface-container border border-outline-variant/40 rounded-xl px-3 py-2 text-xs text-on-surface"
-                />
+                >
+                  <option value="">-- Select Patient --</option>
+                  {patients.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} ({p.age}y, {p.village})</option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <label className="block font-semibold text-on-surface mb-1">Slot & Time</label>
-                <input
-                  type="text"
-                  required
-                  value={scheduledTime}
-                  onChange={(e) => setScheduledTime(e.target.value)}
+                <label className="block font-semibold text-on-surface mb-1">Select Doctor</label>
+                <select
+                  value={selectedDoctorId}
+                  onChange={(e) => setSelectedDoctorId(e.target.value)}
                   className="w-full bg-surface-container border border-outline-variant/40 rounded-xl px-3 py-2 text-xs text-on-surface"
-                />
+                >
+                  <option value="">-- Select Doctor --</option>
+                  {doctors.map(d => (
+                    <option key={d.doctor_id} value={d.doctor_id}>{d.name} ({d.specialization})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-on-surface mb-1">Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                    className="w-full bg-surface-container border border-outline-variant/40 rounded-xl px-3 py-2 text-xs text-on-surface"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-on-surface mb-1">Time</label>
+                  <input
+                    type="time"
+                    required
+                    value={scheduledTimeSlot}
+                    onChange={(e) => setScheduledTimeSlot(e.target.value)}
+                    className="w-full bg-surface-container border border-outline-variant/40 rounded-xl px-3 py-2 text-xs text-on-surface"
+                  />
+                </div>
               </div>
 
               <div>

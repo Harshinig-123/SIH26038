@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CLUSTER_ANALYTICS } from '../../data/mockData';
 
 export const PopulationAnalytics: React.FC = () => {
   const data = CLUSTER_ANALYTICS;
+  const [exportMsg, setExportMsg] = useState('');
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto">
@@ -22,12 +23,18 @@ export const PopulationAnalytics: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Exporting District DR Surveillance Report (PDF)...')}
+          onClick={() => { setExportMsg('Report exported successfully!'); setTimeout(() => setExportMsg(''), 3000); }}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-on-primary font-semibold text-sm transition-all shadow-xs self-start sm:self-auto"
         >
           <span className="material-symbols-outlined text-[18px]">download</span>
           <span>Export DHO Report</span>
         </button>
+        {exportMsg && (
+          <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1">
+            <span className="material-symbols-outlined text-[14px]">check_circle</span>
+            {exportMsg}
+          </span>
+        )}
       </div>
 
       {/* 4 Summary Metric Cards */}

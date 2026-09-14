@@ -1,44 +1,140 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { DRGrade, ScreeningCase } from '../../types';
-import { FUNDUS_IMAGES } from '../../data/mockData';
 import { DRGradeBadge } from '../common/DRGradeBadge';
 
 export const NewScreeningModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   isOpen,
   onClose,
 }) => {
-  const { patients, addNewCase } = useApp();
+  const { patients, selectedPatientId: contextPatientId, addNewCase, addFundusImage } = useApp();
 
   const [step, setStep] = useState<number>(1);
-  const [selectedPatientId, setSelectedPatientId] = useState<string>(patients[0]?.id || '');
+  // Sync with AppContext's selectedPatientId on open
+  const [selectedPatientId, setSelectedPatientId] = useState<string>(contextPatientId || patients[0]?.id || '');
   const [hba1c, setHba1c] = useState<number>(9.5);
   const [bpSystolic, setBpSystolic] = useState<number>(138);
   const [bpDiastolic, setBpDiastolic] = useState<number>(84);
   const [diabetesYears, setDiabetesYears] = useState<number>(10);
   const [dilationMethod, setDilationMethod] = useState<string>('Pharmacological (Tropicamide 0.5%)');
+  const [consentChecked, setConsentChecked] = useState<boolean>(false);
 
-  // Camera capture simulation
-  const [odCaptured, setOdCaptured] = useState<boolean>(true);
-  const [osCaptured, setOsCaptured] = useState<boolean>(true);
-  const [simulatedGrade, setSimulatedGrade] = useState<DRGrade>('SEVERE_NPDR');
-  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  // Image upload state
+  const [odImage, setOdImage] = useState<string | null>(null);
+  const [osImage, setOsImage] = useState<string | null>(null);
+  const [odFileName, setOdFileName] = useState<string>('');
+  const [osFileName, setOsFileName] = useState<string>('');
+  const [odQuality, setOdQuality] = useState<{ score: number; status: string } | null>(null);
+  const [osQuality, setOsQuality] = useState<{ score: number; status: string } | null>(null);
+  const [uploadError, setUploadError] = useState<string>('');
+  const odInputRef = useRef<HTMLInputElement>(null);
+  const osInputRef = useRef<HTMLInputElement>(null);
+
+  // Submission state
+  const [submitted, setSubmitted] = useState<boolean>(false);
+  const [submittedCaseId, setSubmittedCaseId] = useState<string>('');
+
+  // Sync selectedPatientId from context when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedPatientId(contextPatientId || patients[0]?.id || '');
+      // Reset all state on open
+      setStep(1);
+      setHba1c(9.5);
+      setBpSystolic(138);
+      setBpDiastolic(84);
+      setDiabetesYears(10);
+      setDilationMethod('Pharmacological (Tropicamide 0.5%)');
+      setConsentChecked(false);
+      setOdImage(null);
+      setOsImage(null);
+      setOdFileName('');
+      setOsFileName('');
+      setOdQuality(null);
+      setOsQuality(null);
+      setUploadError('');
+      setSubmitted(false);
+      setSubmittedCaseId('');
+    }
+  }, [isOpen, contextPatientId, patients]);
 
   if (!isOpen) return null;
 
   const currentPatient = patients.find(p => p.id === selectedPatientId) || patients[0];
 
-  const handleCaptureCamera = () => {
-    setIsAnalyzing(true);
-    setTimeout(() => {
-      setOdCaptured(true);
-      setOsCaptured(true);
-      setIsAnalyzing(false);
-      setStep(3);
-    }, 1200);
+  // Handle file upload and convert to base64 data URL
+  const handleImageUpload = (file: File, eye: 'od' | 'os') => {
+    setUploadError('');
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select a valid image file (JPEG, PNG, etc.)');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('Image file size must be less than 10MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      
+      // Create an image element to check dimensions
+      const img = new Image();
+      img.onload = () => {
+        // Basic quality assessment based on dimensions
+        const minDim = Math.min(img.width, img.height);
+        let score = 0;
+        let status = '';
+        if (minDim >= 1000) { score = 95; status = 'Excellent'; }
+        else if (minDim >= 500) { score = 85; status = 'Good'; }
+        else if (minDim >= 200) { score = 70; status = 'Acceptable'; }
+        else { score = 45; status = 'Poor - Consider retake'; }
+
+        if (eye === 'od') {
+          setOdImage(dataUrl);
+          setOdFileName(file.name);
+          setOdQuality({ score, status });
+        } else {
+          setOsImage(dataUrl);
+          setOsFileName(file.name);
+          setOsQuality({ score, status });
+        }
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle drag and drop
+  const handleDrop = (e: React.DragEvent, eye: 'od' | 'os') => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) handleImageUpload(file, eye);
   };
 
   const handleSubmitCase = () => {
+    if (!currentPatient) return;
+
+    // Create default EyeScan structure
+    const createEyeScan = (imageUrl: string, grade: DRGrade) => ({
+      imageUrl,
+      focusQualityScore: 0,
+      mediaClarity: 'Adequate' as const,
+      cameraModel: 'Manual Upload',
+      pupilStatus: dilationMethod,
+      aiGrading: {
+        predictedGrade: grade,
+        confidence: 0,
+        edemaRisk: 'Low' as const,
+        macularInvolvement: false,
+      },
+      lesions: [],
+    });
+
     const newCase: Omit<ScreeningCase, 'id' | 'caseNumber' | 'createdDate' | 'timeAgo'> = {
       patientId: currentPatient.id,
       patientName: currentPatient.name,
@@ -51,49 +147,88 @@ export const NewScreeningModal: React.FC<{ isOpen: boolean; onClose: () => void 
       hba1c: Number(hba1c),
       bp: `${bpSystolic}/${bpDiastolic}`,
       diabetesDurationYears: Number(diabetesYears),
-      status: simulatedGrade === 'SEVERE_NPDR' || simulatedGrade === 'PDR' ? 'FLAGGED_URGENT' : 'PENDING_REVIEW',
-      urgency: simulatedGrade === 'SEVERE_NPDR' || simulatedGrade === 'PDR' ? 'urgent' : 'routine',
+      status: 'PENDING_REVIEW',
+      urgency: 'routine',
       eyes: {
-        od: {
-          imageUrl: FUNDUS_IMAGES.severeOD,
-          focusQualityScore: 95,
-          mediaClarity: 'Excellent',
-          cameraModel: 'Remidio NM-FOP Handheld 45°',
-          pupilStatus: dilationMethod,
-          aiGrading: {
-            predictedGrade: simulatedGrade,
-            confidence: 96.2,
-            edemaRisk: simulatedGrade === 'SEVERE_NPDR' ? 'High' : 'Moderate',
-            macularInvolvement: simulatedGrade === 'SEVERE_NPDR',
-          },
-          lesions: [
-            { id: 'l1', type: 'microaneurysm', label: 'Microaneurysms', x: 45, y: 42, confidence: 97 },
-            { id: 'l2', type: 'hemorrhage', label: 'Hemorrhage', x: 50, y: 55, confidence: 93 },
-          ],
-        },
-        os: {
-          imageUrl: FUNDUS_IMAGES.severeOS,
-          focusQualityScore: 92,
-          mediaClarity: 'Excellent',
-          cameraModel: 'Remidio NM-FOP Handheld 45°',
-          pupilStatus: dilationMethod,
-          aiGrading: {
-            predictedGrade: 'MODERATE_NPDR',
-            confidence: 91.4,
-            edemaRisk: 'Moderate',
-            macularInvolvement: false,
-          },
-          lesions: [
-            { id: 'l3', type: 'microaneurysm', label: 'Microaneurysms', x: 40, y: 48, confidence: 91 },
-          ],
-        },
+        od: createEyeScan(odImage || '', 'NO_DR'),
+        os: createEyeScan(osImage || '', 'NO_DR'),
       },
     };
 
-    addNewCase(newCase);
-    onClose();
-    setStep(1);
+    const caseId = addNewCase(newCase);
+
+    // Store fundus images if uploaded
+    const now = new Date().toISOString();
+    if (odImage) {
+      addFundusImage({
+        image_id: `IMG-${Math.floor(10000 + Math.random() * 90000)}`,
+        case_id: caseId,
+        image_data: odImage,
+        eye_side: 'OD',
+        captured_at: now,
+        uploaded_at: now,
+        sync_status: 'pending',
+        quality_status: odQuality && odQuality.score >= 70 ? 'good' : 'acceptable',
+        quality_score: odQuality?.score || 0,
+        quality_notes: odQuality?.status || '',
+        retake_required: (odQuality?.score || 0) < 50,
+      });
+    }
+    if (osImage) {
+      addFundusImage({
+        image_id: `IMG-${Math.floor(10000 + Math.random() * 90000)}`,
+        case_id: caseId,
+        image_data: osImage,
+        eye_side: 'OS',
+        captured_at: now,
+        uploaded_at: now,
+        sync_status: 'pending',
+        quality_status: osQuality && osQuality.score >= 70 ? 'good' : 'acceptable',
+        quality_score: osQuality?.score || 0,
+        quality_notes: osQuality?.status || '',
+        retake_required: (osQuality?.score || 0) < 50,
+      });
+    }
+
+    setSubmittedCaseId(caseId);
+    setSubmitted(true);
   };
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  // Success screen after submission
+  if (submitted) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+        <div className="bg-surface-container-lowest w-full max-w-md rounded-2xl border border-surface-container-high shadow-xl p-8 flex flex-col items-center gap-4 text-center">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
+            <span className="material-symbols-outlined text-emerald-700 text-[36px]">check_circle</span>
+          </div>
+          <h2 className="text-lg font-bold text-on-surface">Screening Case Created!</h2>
+          <p className="text-sm text-on-surface-variant">
+            Case <span className="font-mono font-bold text-primary">#{submittedCaseId}</span> for <strong>{currentPatient?.name}</strong> has been submitted to the tele-review queue.
+          </p>
+          {(odImage || osImage) && (
+            <div className="flex items-center gap-2 text-xs text-emerald-700 font-semibold">
+              <span className="material-symbols-outlined text-[16px]">image</span>
+              <span>{[odImage && 'OD', osImage && 'OS'].filter(Boolean).join(' + ')} fundus image(s) uploaded</span>
+            </div>
+          )}
+          <p className="text-xs text-on-surface-variant">
+            AI analysis will be available once the model is integrated.
+          </p>
+          <button
+            onClick={handleClose}
+            className="mt-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-on-primary font-semibold text-sm shadow-xs"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
@@ -104,11 +239,11 @@ export const NewScreeningModal: React.FC<{ isOpen: boolean; onClose: () => void 
             <span className="material-symbols-outlined text-primary text-[22px]">photo_camera</span>
             <div>
               <h2 className="text-base font-bold text-on-surface">New Retinal Screening Intake</h2>
-              <p className="text-xs text-on-surface-variant">Step {step} of 3: {step === 1 ? 'Patient Demographics' : step === 2 ? 'Fundus Camera Capture' : 'AI Analysis Verification'}</p>
+              <p className="text-xs text-on-surface-variant">Step {step} of 3: {step === 1 ? 'Patient & Consent' : step === 2 ? 'Upload Fundus Images' : 'Review & Submit'}</p>
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
@@ -117,7 +252,7 @@ export const NewScreeningModal: React.FC<{ isOpen: boolean; onClose: () => void 
 
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto flex-1 text-xs">
-          {/* STEP 1: PATIENT & BIOMETRIC DETAILS */}
+          {/* STEP 1: PATIENT & CONSENT */}
           {step === 1 && (
             <div className="flex flex-col gap-4">
               <div>
@@ -164,7 +299,6 @@ export const NewScreeningModal: React.FC<{ isOpen: boolean; onClose: () => void 
                     onChange={(e) => setHba1c(Number(e.target.value))}
                     className="w-full bg-surface-container border border-outline-variant/50 rounded-xl px-3 py-2 text-xs text-on-surface focus:ring-1 focus:ring-primary"
                   />
-                  <span className="text-[10px] text-on-surface-variant">Standard lab or point-of-care reader</span>
                 </div>
 
                 <div>
@@ -210,132 +344,235 @@ export const NewScreeningModal: React.FC<{ isOpen: boolean; onClose: () => void 
                   </select>
                 </div>
               </div>
+
+              {/* Consent Checkbox */}
+              <div className="pt-3 border-t border-surface-container-high">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={consentChecked}
+                    onChange={(e) => setConsentChecked(e.target.checked)}
+                    className="mt-0.5 rounded text-primary focus:ring-primary"
+                  />
+                  <span className="text-xs text-on-surface-variant">
+                    Patient has provided informed consent for retinal screening, AI-assisted analysis, and ABHA-linked data sharing as per DISHA guidelines.
+                  </span>
+                </label>
+              </div>
             </div>
           )}
 
-          {/* STEP 2: FUNDUS CAMERA CAPTURE */}
+          {/* STEP 2: IMAGE UPLOAD */}
           {step === 2 && (
             <div className="flex flex-col gap-5">
               <div className="bg-primary-fixed/20 p-3 rounded-xl border border-primary/20 text-[11px] text-on-surface flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[18px]">verified</span>
-                <span>Camera Connected: <strong>Remidio Handheld Fundus NM-FOP (USB-C OTG)</strong></span>
+                <span className="material-symbols-outlined text-primary text-[18px]">upload_file</span>
+                <span>Upload fundus photographs for both eyes. Drag & drop or click to browse. Supports JPEG, PNG (max 10MB each).</span>
               </div>
 
-              {/* Bilateral Viewports */}
+              {uploadError && (
+                <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px]">error</span>
+                  <span>{uploadError}</span>
+                </div>
+              )}
+
+              {/* Bilateral Upload Zones */}
               <div className="grid grid-cols-2 gap-4">
-                {/* Right Eye */}
-                <div className="bg-surface-container-low p-3 rounded-xl border border-outline-variant/40 flex flex-col items-center">
-                  <span className="font-bold text-on-surface mb-2">Right Eye (OD)</span>
-                  <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-black flex items-center justify-center">
-                    <img
-                      src={FUNDUS_IMAGES.severeOD}
-                      alt="OD Scan"
-                      className="w-full h-full object-cover"
+                {/* Right Eye (OD) Upload */}
+                <div className="flex flex-col items-center gap-2">
+                  <span className="font-bold text-on-surface">Right Eye (OD)</span>
+                  <div
+                    onClick={() => odInputRef.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => handleDrop(e, 'od')}
+                    className={`relative w-full aspect-square rounded-xl border-2 border-dashed cursor-pointer flex flex-col items-center justify-center transition-all overflow-hidden ${
+                      odImage
+                        ? 'border-emerald-400 bg-emerald-50/30'
+                        : 'border-outline-variant/50 bg-surface-container-low hover:border-primary hover:bg-primary-fixed/10'
+                    }`}
+                  >
+                    {odImage ? (
+                      <>
+                        <img src={odImage} alt="OD Fundus" className="w-full h-full object-cover" />
+                        <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/60 text-[10px] text-white font-mono">
+                          OD
+                        </div>
+                        {odQuality && (
+                          <div className={`absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[10px] text-white font-semibold ${
+                            odQuality.score >= 70 ? 'bg-emerald-700' : 'bg-amber-600'
+                          }`}>
+                            Quality: {odQuality.score}%
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setOdImage(null); setOdFileName(''); setOdQuality(null); }}
+                          className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-red-600"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">close</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-on-surface-variant text-[36px]">add_photo_alternate</span>
+                        <span className="text-[11px] text-on-surface-variant mt-1">Click or drag to upload</span>
+                        <span className="text-[10px] text-on-surface-variant">Right Eye (OD)</span>
+                      </>
+                    )}
+                    <input
+                      ref={odInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, 'od'); }}
                     />
-                    <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/60 text-[10px] text-white font-mono">
-                      OD • 45°
-                    </div>
-                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-emerald-700 text-[10px] text-white font-semibold">
-                      Quality: 95%
-                    </div>
                   </div>
-                  <span className="text-[10px] text-emerald-700 font-semibold mt-2 flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                    Sharp Focus & Disc Centered
-                  </span>
+                  {odFileName && (
+                    <span className="text-[10px] text-on-surface-variant truncate max-w-full">{odFileName}</span>
+                  )}
+                  {odQuality && (
+                    <span className={`text-[10px] font-semibold flex items-center gap-1 ${
+                      odQuality.score >= 70 ? 'text-emerald-700' : 'text-amber-700'
+                    }`}>
+                      <span className="material-symbols-outlined text-[14px]">
+                        {odQuality.score >= 70 ? 'check_circle' : 'warning'}
+                      </span>
+                      {odQuality.status}
+                    </span>
+                  )}
                 </div>
 
-                {/* Left Eye */}
-                <div className="bg-surface-container-low p-3 rounded-xl border border-outline-variant/40 flex flex-col items-center">
-                  <span className="font-bold text-on-surface mb-2">Left Eye (OS)</span>
-                  <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-black flex items-center justify-center">
-                    <img
-                      src={FUNDUS_IMAGES.severeOS}
-                      alt="OS Scan"
-                      className="w-full h-full object-cover"
+                {/* Left Eye (OS) Upload */}
+                <div className="flex flex-col items-center gap-2">
+                  <span className="font-bold text-on-surface">Left Eye (OS)</span>
+                  <div
+                    onClick={() => osInputRef.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => handleDrop(e, 'os')}
+                    className={`relative w-full aspect-square rounded-xl border-2 border-dashed cursor-pointer flex flex-col items-center justify-center transition-all overflow-hidden ${
+                      osImage
+                        ? 'border-emerald-400 bg-emerald-50/30'
+                        : 'border-outline-variant/50 bg-surface-container-low hover:border-primary hover:bg-primary-fixed/10'
+                    }`}
+                  >
+                    {osImage ? (
+                      <>
+                        <img src={osImage} alt="OS Fundus" className="w-full h-full object-cover" />
+                        <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/60 text-[10px] text-white font-mono">
+                          OS
+                        </div>
+                        {osQuality && (
+                          <div className={`absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[10px] text-white font-semibold ${
+                            osQuality.score >= 70 ? 'bg-emerald-700' : 'bg-amber-600'
+                          }`}>
+                            Quality: {osQuality.score}%
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setOsImage(null); setOsFileName(''); setOsQuality(null); }}
+                          className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-red-600"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">close</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-on-surface-variant text-[36px]">add_photo_alternate</span>
+                        <span className="text-[11px] text-on-surface-variant mt-1">Click or drag to upload</span>
+                        <span className="text-[10px] text-on-surface-variant">Left Eye (OS)</span>
+                      </>
+                    )}
+                    <input
+                      ref={osInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, 'os'); }}
                     />
-                    <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/60 text-[10px] text-white font-mono">
-                      OS • 45°
-                    </div>
-                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-emerald-700 text-[10px] text-white font-semibold">
-                      Quality: 92%
-                    </div>
                   </div>
-                  <span className="text-[10px] text-emerald-700 font-semibold mt-2 flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                    Sharp Focus & Macula Clear
-                  </span>
+                  {osFileName && (
+                    <span className="text-[10px] text-on-surface-variant truncate max-w-full">{osFileName}</span>
+                  )}
+                  {osQuality && (
+                    <span className={`text-[10px] font-semibold flex items-center gap-1 ${
+                      osQuality.score >= 70 ? 'text-emerald-700' : 'text-amber-700'
+                    }`}>
+                      <span className="material-symbols-outlined text-[14px]">
+                        {osQuality.score >= 70 ? 'check_circle' : 'warning'}
+                      </span>
+                      {osQuality.status}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Simulation DR Grade Selector */}
-              <div className="bg-surface-container p-3 rounded-xl">
-                <span className="font-semibold text-on-surface block mb-1">Simulate AI Diagnostic Grade:</span>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                  {(['NO_DR', 'MILD_NPDR', 'MODERATE_NPDR', 'SEVERE_NPDR', 'PDR'] as DRGrade[]).map((g) => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() => setSimulatedGrade(g)}
-                      className={`p-1.5 rounded-lg text-[10px] font-semibold transition-all text-center border ${
-                        simulatedGrade === g
-                          ? 'bg-primary text-on-primary border-primary shadow-xs'
-                          : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:bg-surface-container-high'
-                      }`}
-                    >
-                      {g.replace('_', ' ')}
-                    </button>
-                  ))}
-                </div>
+              {/* AI Analysis Note */}
+              <div className="p-3 bg-surface-container rounded-xl border border-outline-variant/30 text-[11px] text-on-surface-variant flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px] text-on-surface-variant">smart_toy</span>
+                <span>AI analysis (DR grading, Grad-CAM heatmap, lesion detection) will be available once the AI model is integrated. Images will be stored for future analysis.</span>
               </div>
             </div>
           )}
 
-          {/* STEP 3: INSTANT AI VERIFICATION */}
+          {/* STEP 3: REVIEW & SUBMIT */}
           {step === 3 && (
             <div className="flex flex-col gap-4">
               <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-on-surface">Edge AI Diagnostic Triage</span>
-                  <span className="text-[10px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full font-semibold border border-emerald-200">
-                    Offline Model v2.4 (Quantized)
-                  </span>
-                </div>
+                <span className="font-bold text-sm text-on-surface">Screening Summary</span>
 
-                <div className="flex items-center justify-between bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/30">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-on-surface-variant font-medium">Predicted DR Classification</span>
-                    <div className="mt-1">
-                      <DRGradeBadge grade={simulatedGrade} size="lg" />
-                    </div>
+                {/* Patient Info */}
+                <div className="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/30">
+                  <div className="font-semibold text-on-surface">{currentPatient?.name}</div>
+                  <div className="text-[11px] text-on-surface-variant mt-0.5">
+                    {currentPatient?.age}y, {currentPatient?.gender} • ABHA: {currentPatient?.abhaId}
                   </div>
-                  <div className="text-right">
-                    <span className="text-[10px] text-on-surface-variant font-medium">Model Certainty</span>
-                    <div className="text-lg font-bold text-primary">96.4%</div>
+                  <div className="text-[11px] text-on-surface-variant">
+                    HbA1c: {hba1c}% • BP: {bpSystolic}/{bpDiastolic} • T2D: {diabetesYears}y
                   </div>
                 </div>
 
-                {simulatedGrade === 'SEVERE_NPDR' || simulatedGrade === 'PDR' ? (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-900 text-xs flex items-start gap-2">
-                    <span className="material-symbols-outlined text-red-700 text-[20px] shrink-0">emergency</span>
-                    <div>
-                      <strong>Urgent Referral Recommended!</strong>
-                      <p className="text-[11px] mt-0.5">
-                        Multiple microaneurysms and potential macular edema detected. Automated alert dispatched to Dr. Arvind Rao at Sankara Thane Hospital.
-                      </p>
-                    </div>
+                {/* Uploaded Images Preview */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-surface-container-lowest p-2 rounded-lg border border-outline-variant/30 flex flex-col items-center gap-1">
+                    <span className="text-[10px] font-bold text-on-surface">Right Eye (OD)</span>
+                    {odImage ? (
+                      <img src={odImage} alt="OD" className="w-full aspect-square rounded-lg object-cover" />
+                    ) : (
+                      <div className="w-full aspect-square rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant">
+                        <span className="text-[11px]">No image</span>
+                      </div>
+                    )}
+                    {odQuality && (
+                      <span className="text-[10px] text-emerald-700 font-semibold">Quality: {odQuality.score}%</span>
+                    )}
                   </div>
-                ) : (
-                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs flex items-start gap-2">
-                    <span className="material-symbols-outlined text-emerald-700 text-[20px] shrink-0">check_circle</span>
-                    <div>
-                      <strong>Routine Tracking Recommended</strong>
-                      <p className="text-[11px] mt-0.5">
-                        Low risk of immediate vision loss. Standard 6-12 month tele-camp follow-up advised.
-                      </p>
-                    </div>
+                  <div className="bg-surface-container-lowest p-2 rounded-lg border border-outline-variant/30 flex flex-col items-center gap-1">
+                    <span className="text-[10px] font-bold text-on-surface">Left Eye (OS)</span>
+                    {osImage ? (
+                      <img src={osImage} alt="OS" className="w-full aspect-square rounded-lg object-cover" />
+                    ) : (
+                      <div className="w-full aspect-square rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant">
+                        <span className="text-[11px]">No image</span>
+                      </div>
+                    )}
+                    {osQuality && (
+                      <span className="text-[10px] text-emerald-700 font-semibold">Quality: {osQuality.score}%</span>
+                    )}
                   </div>
-                )}
+                </div>
+
+                {/* AI Pending Notice */}
+                <div className="p-3 bg-surface-container rounded-xl text-xs text-on-surface-variant flex items-start gap-2">
+                  <span className="material-symbols-outlined text-[18px] text-primary shrink-0">hourglass_top</span>
+                  <div>
+                    <strong className="text-on-surface">AI Analysis Pending</strong>
+                    <p className="text-[11px] mt-0.5">
+                      DR grading, lesion detection, and Grad-CAM heatmaps will be generated once the AI model is integrated. This case will be queued for manual doctor review.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -352,7 +589,7 @@ export const NewScreeningModal: React.FC<{ isOpen: boolean; onClose: () => void 
             </button>
           ) : (
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 rounded-xl text-xs font-semibold text-on-surface-variant hover:bg-surface-container transition-colors"
             >
               Cancel
@@ -361,23 +598,21 @@ export const NewScreeningModal: React.FC<{ isOpen: boolean; onClose: () => void 
 
           {step < 3 ? (
             <button
-              onClick={() => {
-                if (step === 1) setStep(2);
-                if (step === 2) handleCaptureCamera();
-              }}
-              disabled={isAnalyzing}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-semibold bg-primary-container hover:bg-primary text-on-primary transition-all shadow-xs"
+              onClick={() => setStep(step + 1)}
+              disabled={step === 1 && !consentChecked}
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-semibold bg-primary-container hover:bg-primary text-on-primary transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>{step === 1 ? 'Next: Capture Retina' : isAnalyzing ? 'Running Edge AI...' : 'Analyze Fundus'}</span>
+              <span>{step === 1 ? 'Next: Upload Images' : 'Next: Review'}</span>
               <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
             </button>
           ) : (
             <button
               onClick={handleSubmitCase}
-              className="flex items-center gap-1.5 px-6 py-2 rounded-xl text-xs font-semibold bg-primary hover:bg-primary-dark text-on-primary transition-all shadow-xs"
+              disabled={!odImage && !osImage}
+              className="flex items-center gap-1.5 px-6 py-2 rounded-xl text-xs font-semibold bg-primary hover:bg-primary-dark text-on-primary transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="material-symbols-outlined text-[16px]">done_all</span>
-              <span>Submit Case to Tele-Queue</span>
+              <span>Submit Screening Case</span>
             </button>
           )}
         </div>

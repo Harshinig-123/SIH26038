@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { DRGradeBadge } from '../common/DRGradeBadge';
 
@@ -6,7 +6,16 @@ export const NurseDashboard: React.FC<{ onOpenNewScreening: () => void; onOpenNe
   onOpenNewScreening,
   onOpenNewPatient,
 }) => {
-  const { cases, setSelectedCaseId, setActiveTab, setCurrentRole, triggerSync, pendingSyncCount, isSyncing } = useApp();
+  const { cases, setSelectedCaseId, setActiveTab, setCurrentRole, triggerSync, pendingSyncCount, isSyncing, totalPatientsCount, urgentCasesCount } = useApp();
+  const [searchTerm, setSearchTerm] = useState('');
+  const filteredCases = searchTerm.trim()
+    ? cases.filter(c =>
+        c.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.caseNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.village.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.abhaId.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : cases;
 
   const handleReviewCase = (caseId: string) => {
     setSelectedCaseId(caseId);
@@ -65,7 +74,7 @@ export const NurseDashboard: React.FC<{ onOpenNewScreening: () => void; onOpenNe
           </div>
           <div>
             <div className="text-xs text-on-surface-variant font-medium">Patients Registered</div>
-            <div className="text-2xl font-bold text-on-surface mt-0.5">1,248</div>
+            <div className="text-2xl font-bold text-on-surface mt-0.5">{totalPatientsCount.toLocaleString()}</div>
           </div>
           <div className="mt-3 pt-3 border-t border-surface-container-low flex items-center justify-between text-xs text-on-surface-variant">
             <span>Total Camp Coverage</span>
@@ -104,7 +113,7 @@ export const NurseDashboard: React.FC<{ onOpenNewScreening: () => void; onOpenNe
           </div>
           <div>
             <div className="text-xs text-on-surface-variant font-medium">Screenings Today</div>
-            <div className="text-2xl font-bold text-on-surface mt-0.5">34</div>
+            <div className="text-2xl font-bold text-on-surface mt-0.5">{cases.length}</div>
           </div>
           <div className="mt-3">
             <div className="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
@@ -159,7 +168,7 @@ export const NurseDashboard: React.FC<{ onOpenNewScreening: () => void; onOpenNe
           </div>
           <div>
             <div className="text-xs text-on-surface-variant font-medium">Urgent Referrals</div>
-            <div className="text-2xl font-bold text-red-700 mt-0.5">7</div>
+            <div className="text-2xl font-bold text-red-700 mt-0.5">{urgentCasesCount}</div>
           </div>
           <div className="mt-3 pt-3 border-t border-surface-container-low flex items-center justify-between text-xs text-on-surface-variant">
             <span>Ophthalmology SLA</span>
@@ -186,6 +195,8 @@ export const NurseDashboard: React.FC<{ onOpenNewScreening: () => void; onOpenNe
               <input
                 type="text"
                 placeholder="Search patient, ABHA, or village..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 pr-3 py-1.5 text-xs bg-surface-container rounded-lg border border-outline-variant/40 focus:outline-none focus:ring-1 focus:ring-primary w-60"
               />
             </div>
@@ -206,7 +217,7 @@ export const NurseDashboard: React.FC<{ onOpenNewScreening: () => void; onOpenNe
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-container-low">
-              {cases.map((c) => (
+              {filteredCases.map((c) => (
                 <tr key={c.id} className="hover:bg-surface-container-low/50 transition-colors">
                   {/* Patient Info */}
                   <td className="px-5 py-3.5">

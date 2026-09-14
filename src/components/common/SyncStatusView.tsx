@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 
 export const SyncStatusView: React.FC = () => {
   const { isOnline, setIsOnline, pendingSyncCount, triggerSync, isSyncing, cases } = useApp();
+  const [backupMsg, setBackupMsg] = useState('');
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">
@@ -70,13 +71,18 @@ export const SyncStatusView: React.FC = () => {
       <div className="bg-surface-container-lowest rounded-2xl border border-surface-container-high shadow-xs p-6 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-on-surface">Local Records in Device Memory</h2>
-          <button
-            onClick={() => alert('Exporting local encrypted backup file (.enc)...')}
-            className="text-xs text-primary hover:underline font-semibold flex items-center gap-1"
-          >
-            <span className="material-symbols-outlined text-[16px]">file_download</span>
-            <span>Export USB Camp Backup</span>
-          </button>
+          <div className="flex flex-col items-end gap-1">
+            <button
+              onClick={() => { setBackupMsg('Backup exported successfully!'); setTimeout(() => setBackupMsg(''), 3000); }}
+              className="text-xs text-primary hover:underline font-semibold flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-[16px]">file_download</span>
+              <span>Export USB Camp Backup</span>
+            </button>
+            {backupMsg && (
+              <span className="text-[10px] text-emerald-700 font-semibold">{backupMsg}</span>
+            )}
+          </div>
         </div>
 
         <div className="divide-y divide-surface-container-low text-xs">

@@ -3,9 +3,16 @@ import { useApp } from '../../context/AppContext';
 import { DRGradeBadge } from '../common/DRGradeBadge';
 
 export const PatientDashboard: React.FC = () => {
-  const { currentLanguage, appointments } = useApp();
+  const { currentLanguage, appointments, selectedPatient, cases } = useApp();
 
   const [consentApproved, setConsentApproved] = useState(true);
+
+  // Get the selected patient's data and latest case
+  const patient = selectedPatient;
+  const patientCase = patient ? cases.find(c => c.patientId === patient.id) : null;
+  const odGrade = patientCase?.eyes.od.aiGrading.predictedGrade || 'NO_DR';
+  const osGrade = patientCase?.eyes.os.aiGrading.predictedGrade || 'NO_DR';
+  const overallGrade = patientCase?.verifiedGrade || odGrade;
 
   // Translations dictionary for bilingual patient accessibility
   const t = {
@@ -91,9 +98,9 @@ export const PatientDashboard: React.FC = () => {
             className="w-12 h-12 rounded-full object-cover ring-2 ring-primary/40"
           />
           <div>
-            <div className="font-bold text-sm text-on-surface">Kasturba Bai Sakharam</div>
-            <div className="text-xs text-on-surface-variant">Age: 62 • Sonawale Village</div>
-            <div className="text-[11px] font-mono text-primary font-semibold">ABHA: 91-4502-8841-3920</div>
+            <div className="font-bold text-sm text-on-surface">{patient?.name || 'No patient selected'}</div>
+            <div className="text-xs text-on-surface-variant">Age: {patient?.age || '-'} • {patient?.village || '-'}</div>
+            <div className="text-[11px] font-mono text-primary font-semibold">ABHA: {patient?.abhaId || '-'}</div>
           </div>
         </div>
       </div>
@@ -110,7 +117,7 @@ export const PatientDashboard: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <DRGradeBadge grade="SEVERE_NPDR" size="lg" />
+            <DRGradeBadge grade={overallGrade} size="lg" />
           </div>
         </div>
 
@@ -127,10 +134,10 @@ export const PatientDashboard: React.FC = () => {
             <div>
               <span className="text-xs font-bold text-on-surface block">Right Eye (OD)</span>
               <div className="mt-1">
-                <DRGradeBadge grade="SEVERE_NPDR" size="sm" />
+                <DRGradeBadge grade={odGrade} size="sm" />
               </div>
-              <span className="text-[11px] text-red-700 font-semibold block mt-1">
-                Swelling threat near center of vision
+              <span className="text-[11px] text-on-surface-variant font-semibold block mt-1">
+                {patientCase ? `Edema Risk: ${patientCase.eyes.od.aiGrading.edemaRisk}` : 'Awaiting screening'}
               </span>
             </div>
           </div>
@@ -147,10 +154,10 @@ export const PatientDashboard: React.FC = () => {
             <div>
               <span className="text-xs font-bold text-on-surface block">Left Eye (OS)</span>
               <div className="mt-1">
-                <DRGradeBadge grade="MODERATE_NPDR" size="sm" />
+                <DRGradeBadge grade={osGrade} size="sm" />
               </div>
-              <span className="text-[11px] text-amber-700 font-semibold block mt-1">
-                Moderate changes, stable macula
+              <span className="text-[11px] text-on-surface-variant font-semibold block mt-1">
+                {patientCase ? `Edema Risk: ${patientCase.eyes.os.aiGrading.edemaRisk}` : 'Awaiting screening'}
               </span>
             </div>
           </div>
