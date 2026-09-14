@@ -1,12 +1,10 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { UserRole } from '../../types';
 import { AppLogo } from './AppLogo';
 
 export const Header: React.FC = () => {
   const { 
     currentRole, 
-    setCurrentRole, 
     isOnline, 
     setIsOnline,
     pendingSyncCount,
@@ -53,43 +51,10 @@ export const Header: React.FC = () => {
             </p>
           </div>
         </div>
-
-        {/* Vertical Divider */}
-        <div className="h-6 w-px bg-outline-variant/40 hidden md:block" />
-
-        {/* Role Selector Tabs */}
-        <div className="hidden lg:flex items-center bg-surface-container p-1 rounded-lg gap-1 text-xs font-medium">
-          <span className="text-[11px] text-on-surface-variant font-semibold px-2">Role:</span>
-          {(['nurse', 'doctor', 'patient'] as UserRole[]).map((r) => (
-            <button
-              key={r}
-              onClick={() => setCurrentRole(r)}
-              className={`px-3 py-1 rounded-md transition-all capitalize ${
-                currentRole === r
-                  ? 'bg-primary-container text-on-primary font-semibold shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
-              }`}
-            >
-              {r === 'nurse' && 'Nurse / Camp'}
-              {r === 'doctor' && 'Ophthalmologist'}
-              {r === 'patient' && 'Patient View'}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Right Cluster: Sync, Languages, Profile */}
       <div className="flex items-center gap-3">
-        {/* Responsive Role Selector for mobile/tablet */}
-        <select
-          value={currentRole}
-          onChange={(e) => setCurrentRole(e.target.value as UserRole)}
-          className="lg:hidden text-xs bg-surface-container border border-outline-variant/50 rounded-lg px-2 py-1 text-on-surface font-medium focus:outline-none focus:ring-1 focus:ring-primary"
-        >
-          <option value="nurse">Nurse View</option>
-          <option value="doctor">Doctor View</option>
-          <option value="patient">Patient View</option>
-        </select>
 
         {/* Connectivity & Offline Sync simulation */}
         <div className="flex items-center gap-2">
