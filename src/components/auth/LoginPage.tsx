@@ -20,6 +20,8 @@ export const LoginPage: React.FC<{ onLogin: (role: UserRole) => void }> = ({ onL
   const [showDoctorPassword, setShowDoctorPassword] = useState(false);
 
   const [patientAbha, setPatientAbha] = useState('');
+  const [patientPin, setPatientPin] = useState('');
+  const [showPatientPin, setShowPatientPin] = useState(false);
   const [otpChannel, setOtpChannel] = useState<'sms' | 'voice'>('sms');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authMessage, setAuthMessage] = useState('');
@@ -411,12 +413,47 @@ export const LoginPage: React.FC<{ onLogin: (role: UserRole) => void }> = ({ onL
                       type="button"
                       onClick={() => {
                         setPatientAbha('91-4502-8841-3920');
+                        setPatientPin('123456');
                       }}
                       className="text-primary hover:underline font-semibold"
                     >
                       Fill demo
                     </button>
                   </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block font-semibold text-on-surface" htmlFor="pat-pwd">
+                      Security PIN / Password
+                    </label>
+                    <span className="text-[11px] text-primary hover:underline cursor-pointer">Forgot PIN?</span>
+                  </div>
+                  <div className="relative">
+                    <span className="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-[18px]">
+                      lock
+                    </span>
+                    <input
+                      id="pat-pwd"
+                      type={showPatientPin ? 'text' : 'password'}
+                      value={patientPin}
+                      onChange={(e) => setPatientPin(e.target.value)}
+                      placeholder="e.g. 123456"
+                      className="w-full pl-9 pr-9 py-2.5 bg-surface-container border border-outline-variant/50 rounded-xl text-xs text-on-surface placeholder:text-on-surface-variant/50 focus:ring-1 focus:ring-primary focus:bg-surface-container-lowest font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPatientPin(!showPatientPin)}
+                      className="absolute right-3 top-2.5 text-on-surface-variant hover:text-on-surface"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">
+                        {showPatientPin ? 'visibility_off' : 'visibility'}
+                      </span>
+                    </button>
+                  </div>
+                  <p className="mt-1 text-[11px] text-on-surface-variant">
+                    e.g. Default PIN: <strong className="text-primary font-mono">123456</strong>
+                  </p>
                 </div>
 
                 <div className="p-3 bg-surface-container-low rounded-xl border border-outline-variant/30">
