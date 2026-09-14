@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { UserRole, Language } from '../../types';
+import { AppLogo } from './AppLogo';
 
 export const Header: React.FC = () => {
   const { 
@@ -19,12 +20,12 @@ export const Header: React.FC = () => {
     nurse: {
       name: 'Sister Lakshmi Sharma, RN',
       title: 'PHC Badlapur Central, Thane',
-      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAw_YROIU5UHNiPqY6_3EV49FXn6VsTy-PilgCuHcrfxi137lccb_YkdAKYSk7LQPZ7EYQzQvQhwolmg79DwHp17U4tC8Zg6ac00GxtBe-__bgjaeuxn5scvyZw54z-ouk4TLfH2x-zsOuMtSla1oZjQAa22J7sfPlWTgvrkJ1fq-9IyaUh2l7IgBwKZDmKzbrNApZDtnEx-tRXc43tCMoIH5T_M9F-vZNVxDnR93so3RJ9RYc-eWj6Pw',
+      avatar: 'https://images.unsplash.com/photo-1594824813689-51475c40049a?auto=format&fit=crop&w=200&q=80',
     },
     doctor: {
       name: 'Dr. Arvind Rao, MS (Ophth)',
       title: 'Sankara District Hospital, Thane',
-      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBdEqr8SL09Xq88v4tb9iqvC_qeiPYSs8iHtEfacKhe2K_upNIwv_1AWHzNNtIU90faR2Zpevq1HggEypJ0Le4a_s-MpQEPgZQ_ZCNnaI8JuevcZfPqCKqWsN7Gj7UeroQmXcMq_rc2J_acUO9vjtRXkAHfi-XpwZksOJ1oOVVmGQn5EXCD4lwDOYRW1IvppPTvAZQ682KBnJci93njT0KbMW4i50jPW-zeyugUBlJwL0X1dblCWetkfA',
+      avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=200&q=80',
     },
     patient: {
       name: 'Kasturba Bai Sakharam',
@@ -45,11 +46,7 @@ export const Header: React.FC = () => {
       {/* Brand & Left Cluster */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2.5">
-          <img
-            src="https://lh3.googleusercontent.com/aida/AEtjO1Vsc3DdIGk8K77Xfx2W_l12k-7FHFZ-Q7hP0D5trem7DUEsCSIcVgl2rhv9nMKc68g6DR0TgOrQJ3xLv9aSV-XzT_tvc7G3IZ1KXv-QzVw0XPBUgOLOWVWTYw5lkmzBK6OHGVWg-8JGQfB0QwqFlm3A5DCQNHINExBI3Gn8NB5TyF0jV0OCqwqPlajlx3DjKn4E73Z-wO9ZcaZeeVjXoXKym3Hqe5vMJJkJPjtIhNx5sb5mXXWWVa27GKks"
-            alt="Retina-AI Logo"
-            className="h-8 w-auto object-contain"
-          />
+          <AppLogo size={34} />
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-primary text-base tracking-tight leading-none">Retina-AI</span>

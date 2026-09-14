@@ -107,7 +107,7 @@ export const TeleOphthalAppointments: React.FC = () => {
               {/* Inset Doctor PiP */}
               <div className="absolute bottom-3 right-3 w-32 aspect-video rounded-lg overflow-hidden border-2 border-white/40 shadow-md bg-slate-800">
                 <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdEqr8SL09Xq88v4tb9iqvC_qeiPYSs8iHtEfacKhe2K_upNIwv_1AWHzNNtIU90faR2Zpevq1HggEypJ0Le4a_s-MpQEPgZQ_ZCNnaI8JuevcZfPqCKqWsN7Gj7UeroQmXcMq_rc2J_acUO9vjtRXkAHfi-XpwZksOJ1oOVVmGQn5EXCD4lwDOYRW1IvppPTvAZQ682KBnJci93njT0KbMW4i50jPW-zeyugUBlJwL0X1dblCWetkfA"
+                  src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=300&q=80"
                   alt="Doctor PiP"
                   className="w-full h-full object-cover"
                 />
