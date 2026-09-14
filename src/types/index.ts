@@ -1,4 +1,4 @@
-export type UserRole = 'nurse' | 'doctor' | 'patient' | 'analytics';
+export type UserRole = 'nurse' | 'doctor' | 'patient';
 
 export type Language = 'en' | 'hi' | 'mr';
 

@@ -4,7 +4,7 @@ import { TeleconsultAppointment } from '../../types';
 import { DRGradeBadge } from '../common/DRGradeBadge';
 
 export const TeleOphthalAppointments: React.FC = () => {
-  const { appointments, scheduleAppointment, patients, doctors } = useApp();
+  const { appointments, scheduleAppointment, patients, doctors, currentRole } = useApp();
 
   const [activeCall, setActiveCall] = useState<TeleconsultAppointment | null>(null);
   const [rxNotes, setRxNotes] = useState<string>('Tab Metformin 500mg BD • Eye Drop Nepafenac 0.1% TDS (OD) • Strict Glycemic & BP Control');
@@ -68,8 +68,8 @@ export const TeleOphthalAppointments: React.FC = () => {
         </button>
       </div>
 
-      {/* ACTIVE VIDEO CALL LOBBY SIMULATOR */}
-      {activeCall && (
+      {/* ACTIVE VIDEO CALL LOBBY SIMULATOR (DOCTOR ONLY) */}
+      {activeCall && currentRole === 'doctor' && (
         <div className="bg-surface-container-lowest rounded-2xl border-2 border-primary/30 p-6 shadow-md flex flex-col gap-5">
           <div className="flex items-center justify-between border-b border-surface-container-low pb-3">
             <div className="flex items-center gap-2">
@@ -209,15 +209,40 @@ export const TeleOphthalAppointments: React.FC = () => {
               <p className="text-xs text-on-surface-variant line-clamp-2 mb-3">
                 {app.reason}
               </p>
+
+              {/* Doctor's clinical notes & orders */}
+              <div className="mt-2.5 mb-3 p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs">
+                <div className="text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1 mb-1">
+                  <span className="material-symbols-outlined text-[14px]">clinical_notes</span>
+                  <span>Doctor Clinical Orders / Rx</span>
+                </div>
+                <p className="text-[11px] text-on-surface leading-relaxed">
+                  {app.patientName.includes('Kasturba')
+                    ? 'Tab Metformin 500mg BD • Eye Drop Nepafenac 0.1% TDS (OD) • Referral to Base Hospital within 7 days.'
+                    : 'Routine glycemic control advised. Follow up tele-screening in 6 months.'}
+                </p>
+              </div>
             </div>
 
-            <button
-              onClick={() => setActiveCall(app)}
-              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-primary-container hover:bg-primary text-on-primary font-semibold text-xs transition-colors shadow-xs"
-            >
-              <span className="material-symbols-outlined text-[18px]">video_call</span>
-              <span>Launch Video Consult</span>
-            </button>
+            {currentRole === 'doctor' ? (
+              <button
+                onClick={() => setActiveCall(app)}
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-primary-container hover:bg-primary text-on-primary font-semibold text-xs transition-colors shadow-xs"
+              >
+                <span className="material-symbols-outlined text-[18px]">video_call</span>
+                <span>Launch Video Consult</span>
+              </button>
+            ) : (
+              <div className="w-full flex items-center justify-between py-2 px-3 rounded-xl bg-surface-container text-xs border border-outline-variant/30">
+                <span className="text-on-surface-variant font-medium flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-primary text-[18px]">videocam</span>
+                  <span>Specialist Video Call</span>
+                </span>
+                <span className="text-[10px] font-semibold text-secondary bg-secondary-fixed/50 px-2 py-0.5 rounded">
+                  Attended by Doctor
+                </span>
+              </div>
+            )}
           </div>
         ))}
       </div>

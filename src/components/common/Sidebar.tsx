@@ -19,13 +19,11 @@ export const Sidebar: React.FC<{ onOpenNewScreening?: () => void; onOpenNewPatie
               {currentRole === 'nurse' && 'Frontline Camp Station'}
               {currentRole === 'doctor' && 'Ophthalmic Review Node'}
               {currentRole === 'patient' && 'Patient Vision Portal'}
-              {currentRole === 'analytics' && 'State Surveillance Node'}
             </div>
             <div className="text-xs font-semibold text-on-surface truncate">
               {currentRole === 'nurse' && 'PHC Badlapur Cluster'}
               {currentRole === 'doctor' && 'Thane Base Tele-Hub'}
               {currentRole === 'patient' && 'ABHA Linked Vision ID'}
-              {currentRole === 'analytics' && 'Maharashtra Directorate'}
             </div>
           </div>
           <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
@@ -170,18 +168,6 @@ export const Sidebar: React.FC<{ onOpenNewScreening?: () => void; onOpenNewPatie
                 <span className="material-symbols-outlined text-[18px]">folder_shared</span>
                 <span>Patient EMR Stack</span>
               </button>
-
-              <button
-                onClick={() => setActiveTab('analytics')}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  activeTab === 'analytics'
-                    ? 'bg-primary-container text-on-primary font-semibold shadow-xs'
-                    : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[18px]">analytics</span>
-                <span>District Insights</span>
-              </button>
             </>
           )}
 
@@ -222,35 +208,6 @@ export const Sidebar: React.FC<{ onOpenNewScreening?: () => void; onOpenNewPatie
               >
                 <span className="material-symbols-outlined text-[18px]">verified_user</span>
                 <span>Consent & Privacy</span>
-              </button>
-            </>
-          )}
-
-          {/* ANALYTICS NAVIGATION */}
-          {currentRole === 'analytics' && (
-            <>
-              <button
-                onClick={() => setActiveTab('dashboard')}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  activeTab === 'dashboard'
-                    ? 'bg-primary-container text-on-primary font-semibold shadow-xs'
-                    : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[18px]">monitoring</span>
-                <span>Prevalence Dashboard</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('clusters')}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  activeTab === 'clusters'
-                    ? 'bg-primary-container text-on-primary font-semibold shadow-xs'
-                    : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[18px]">map</span>
-                <span>PHC Camp Clusters</span>
               </button>
             </>
           )}

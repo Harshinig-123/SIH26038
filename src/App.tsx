@@ -7,7 +7,6 @@ import { DoctorDashboard } from './components/doctor/DoctorDashboard';
 import { CaseReviewWorkspace } from './components/doctor/CaseReviewWorkspace';
 import { TeleOphthalAppointments } from './components/teleconsult/TeleOphthalAppointments';
 import { PatientDashboard } from './components/patient/PatientDashboard';
-import { PopulationAnalytics } from './components/analytics/PopulationAnalytics';
 import { PatientsRegistry } from './components/nurse/PatientsRegistry';
 import { SyncStatusView } from './components/common/SyncStatusView';
 import { NewScreeningModal } from './components/nurse/NewScreeningModal';
@@ -59,9 +58,6 @@ export const App: React.FC = () => {
           />
         );
       }
-      if (activeTab === 'analytics') {
-        return <PopulationAnalytics />;
-      }
       return <DoctorDashboard />;
     }
 
@@ -70,10 +66,6 @@ export const App: React.FC = () => {
         return <TeleOphthalAppointments />;
       }
       return <PatientDashboard />;
-    }
-
-    if (currentRole === 'analytics') {
-      return <PopulationAnalytics />;
     }
 
     return (

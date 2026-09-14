@@ -31,11 +31,6 @@ export const Header: React.FC = () => {
       name: 'Kasturba Bai Sakharam',
       title: 'ABHA: 91-4502-8841-3920',
       avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
-    },
-    analytics: {
-      name: 'District Health Officer (DHO)',
-      title: 'National Blindness Control Program',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80',
     }
   };
 
@@ -66,7 +61,7 @@ export const Header: React.FC = () => {
         {/* Role Selector Tabs */}
         <div className="hidden lg:flex items-center bg-surface-container p-1 rounded-lg gap-1 text-xs font-medium">
           <span className="text-[11px] text-on-surface-variant font-semibold px-2">Role:</span>
-          {(['nurse', 'doctor', 'patient', 'analytics'] as UserRole[]).map((r) => (
+          {(['nurse', 'doctor', 'patient'] as UserRole[]).map((r) => (
             <button
               key={r}
               onClick={() => setCurrentRole(r)}
@@ -79,7 +74,6 @@ export const Header: React.FC = () => {
               {r === 'nurse' && 'Nurse / Camp'}
               {r === 'doctor' && 'Ophthalmologist'}
               {r === 'patient' && 'Patient View'}
-              {r === 'analytics' && 'Analytics'}
             </button>
           ))}
         </div>
@@ -96,7 +90,6 @@ export const Header: React.FC = () => {
           <option value="nurse">Nurse View</option>
           <option value="doctor">Doctor View</option>
           <option value="patient">Patient View</option>
-          <option value="analytics">Analytics</option>
         </select>
 
         {/* Connectivity & Offline Sync simulation */}

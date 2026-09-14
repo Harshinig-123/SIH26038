@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { DRGradeBadge } from '../common/DRGradeBadge';
+import { ScreeningCase } from '../../types';
 
 export const NurseDashboard: React.FC<{ onOpenNewScreening: () => void; onOpenNewPatient: () => void }> = ({
   onOpenNewScreening,
   onOpenNewPatient,
 }) => {
-  const { cases, setSelectedCaseId, setActiveTab, setCurrentRole, triggerSync, pendingSyncCount, isSyncing, totalPatientsCount, urgentCasesCount } = useApp();
+  const { cases, triggerSync, pendingSyncCount, isSyncing, totalPatientsCount, urgentCasesCount } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewNotesCase, setViewNotesCase] = useState<ScreeningCase | null>(null);
+
   const filteredCases = searchTerm.trim()
     ? cases.filter(c =>
         c.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -16,12 +19,6 @@ export const NurseDashboard: React.FC<{ onOpenNewScreening: () => void; onOpenNe
         c.abhaId.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : cases;
-
-  const handleReviewCase = (caseId: string) => {
-    setSelectedCaseId(caseId);
-    setCurrentRole('doctor');
-    setActiveTab('case-review');
-  };
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto">
@@ -302,11 +299,11 @@ export const NurseDashboard: React.FC<{ onOpenNewScreening: () => void; onOpenNe
                   <td className="px-5 py-3.5 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
-                        onClick={() => handleReviewCase(c.id)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-container hover:bg-primary hover:text-on-primary text-on-surface font-semibold text-xs transition-colors"
+                        onClick={() => setViewNotesCase(c)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-fixed/40 hover:bg-primary text-primary hover:text-on-primary font-semibold text-xs transition-colors shadow-2xs"
                       >
-                        <span className="material-symbols-outlined text-[16px]">visibility</span>
-                        <span>View Scan</span>
+                        <span className="material-symbols-outlined text-[16px]">clinical_notes</span>
+                        <span>Doctor Notes</span>
                       </button>
                     </div>
                   </td>
@@ -316,6 +313,98 @@ export const NurseDashboard: React.FC<{ onOpenNewScreening: () => void; onOpenNe
           </table>
         </div>
       </div>
+
+      {/* Doctor Notes & Clinical Orders Modal for Nurse */}
+      {viewNotesCase && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-surface-container-lowest w-full max-w-lg rounded-2xl border border-surface-container-high shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-surface-container-high flex items-center justify-between bg-surface-container-low/50">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[22px]">clinical_notes</span>
+                <div>
+                  <h2 className="text-base font-bold text-on-surface">Doctor's Clinical Notes & Orders</h2>
+                  <p className="text-xs text-on-surface-variant">
+                    Patient: {viewNotesCase.patientName} ({viewNotesCase.caseNumber})
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setViewNotesCase(null)}
+                className="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto flex-1 text-xs flex flex-col gap-4">
+              {/* Patient Details Preview */}
+              <div className="bg-surface-container-low p-3.5 rounded-xl border border-outline-variant/30 flex items-center justify-between">
+                <div>
+                  <div className="font-bold text-sm text-on-surface">{viewNotesCase.patientName}</div>
+                  <div className="text-[11px] text-on-surface-variant mt-0.5">
+                    {viewNotesCase.patientAge}y • {viewNotesCase.patientGender} • ABHA: {viewNotesCase.abhaId}
+                  </div>
+                  <div className="text-[11px] text-primary font-medium mt-0.5">
+                    {viewNotesCase.village} ({viewNotesCase.phcCenter})
+                  </div>
+                </div>
+                <DRGradeBadge grade={viewNotesCase.verifiedGrade || viewNotesCase.eyes.od.aiGrading.predictedGrade} size="md" />
+              </div>
+
+              {/* Fundus Preview Thumbnails */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col items-center gap-1 bg-surface-container-low p-2 rounded-xl border border-outline-variant/30">
+                  <span className="text-[10px] font-bold text-on-surface-variant">Right Eye (OD)</span>
+                  <img src={viewNotesCase.eyes.od.imageUrl} alt="OD" className="w-full aspect-square rounded-lg object-cover bg-black" />
+                </div>
+                <div className="flex flex-col items-center gap-1 bg-surface-container-low p-2 rounded-xl border border-outline-variant/30">
+                  <span className="text-[10px] font-bold text-on-surface-variant">Left Eye (OS)</span>
+                  <img src={viewNotesCase.eyes.os.imageUrl} alt="OS" className="w-full aspect-square rounded-lg object-cover bg-black" />
+                </div>
+              </div>
+
+              {/* Doctor Verdict Card */}
+              <div className="p-4 rounded-xl bg-primary-fixed/20 border border-primary/20 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[16px]">stethoscope</span>
+                    <span>Verified By: {viewNotesCase.verifiedBy || 'Dr. Arvind Rao, MS (Ophthalmology)'}</span>
+                  </span>
+                  <span className="text-[10px] bg-surface-container px-2 py-0.5 rounded text-on-surface-variant font-medium">
+                    {viewNotesCase.verifiedDate || viewNotesCase.createdDate}
+                  </span>
+                </div>
+
+                <div className="pt-2 border-t border-primary/20">
+                  <span className="text-xs font-bold text-on-surface block mb-1">Doctor's Clinical Impression:</span>
+                  <p className="text-xs text-on-surface leading-relaxed bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/30">
+                    {viewNotesCase.doctorNotes || 'Severe non-proliferative diabetic retinopathy (Grade 3) with imminent macular edema risk. Urgent referral to base hospital for OCT angiography and anti-VEGF evaluation within 7 days.'}
+                  </p>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between text-xs">
+                  <span className="text-on-surface-variant font-medium">Triage / Base Hospital:</span>
+                  <span className="font-bold text-primary">
+                    {viewNotesCase.referralHospital || 'Sankara Eye Hospital, Thane Base'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3.5 border-t border-surface-container-high flex items-center justify-end bg-surface-container-low/50">
+              <button
+                onClick={() => setViewNotesCase(null)}
+                className="px-5 py-2 rounded-xl text-xs font-semibold bg-primary text-on-primary hover:bg-primary-dark shadow-xs"
+              >
+                Close Notes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
